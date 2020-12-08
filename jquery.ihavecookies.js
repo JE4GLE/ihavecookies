@@ -51,6 +51,7 @@
             moreInfoLabel: 'More information',
             acceptBtnLabel: 'Accept Cookies',
             advancedBtnLabel: 'Customise Cookies',
+            advancedSaveBtnLabel: 'Save',
             cookieTypesTitle: 'Select cookies to accept',
             fixedCookieTypeLabel:'Necessary',
             fixedCookieTypeDesc: 'These are cookies that are essential for the website to work correctly.',
@@ -100,9 +101,8 @@
                 // Set cookie
                 dropCookie(true, settings.expires);
 
-                // If 'data-auto' is set to ON, tick all checkboxes because
-                // the user hasn't clicked the customise cookies button
-                $('input[name="gdpr[]"][data-auto="on"]').prop('checked', true);
+                // Accept all cookies, because user clicked 'accept all'
+                $('input[name="gdpr[]"]').prop('checked', true);
 
                 // Save users cookie preferences (in a cookie!)
                 var prefs = [];
@@ -122,10 +122,30 @@
                 // select the cookies they want to accept.
                 $('input[name="gdpr[]"]:not(:disabled)').attr('data-auto', 'off').prop('checked', false);
                 $('#gdpr-cookie-types').slideDown('fast', function(){
-                    $('#gdpr-cookie-advanced').prop('disabled', true);
+                    let advancedButton = $('#gdpr-cookie-advanced');
+                    advancedButton.text(settings.advancedSaveBtnLabel);
+                    advancedButton.attr("id", "gdpr-cookie-advanced-save");
                 });
             });
+            // Save current cookie settings
+            body.on('click', '#gdpr-cookie-advanced-save', function() {
+                // Set cookie
+                dropCookie(true, settings.expires);
 
+                // If 'data-auto' is set to ON, tick all checkboxes because
+                // the user hasn't clicked the customise cookies button
+                $('input[name="gdpr[]"][data-auto="on"]').prop('checked', true);
+
+                // Save users cookie preferences (in a cookie!)
+                var prefs = [];
+                $.each($('input[name="gdpr[]"]').serializeArray(), function(i, field){
+                    prefs.push(field.value);
+                });
+                setCookie('cookieControlPrefs', encodeURIComponent(JSON.stringify(prefs)), 365);
+
+                // Run callback function
+                settings.onAccept.call(this);
+            });
         } else {
             var cookieVal = true;
             if (myCookie == 'false') {
